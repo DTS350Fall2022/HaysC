@@ -1,0 +1,91 @@
+---
+title: "Task 2"
+author: "Claire Hays"
+date: "9/1/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+sin(pi/4)
+```
+#this is how to perform the computation sin"
+
+
+```{r}
+x <- (10/3)
+x
+```
+#assigning the value x to a value
+#names that are and are not allowed
+
+```{r}
+MySequence <- seq(0, 50, length.out = 7)
+MySequence
+```
+
+```{r}
+my_vector <- c(1, 5, 12, 31, 19)
+my_vector
+```
+
+```{r}
+7+5==12
+
+```
+#the == sign is used to check if two things are eaual to eachother
+
+```{r}
+(7+4=12)|(5−4=1)
+
+#not sure?
+```
+
+
+
+#Exercies from book
+
+```{r}
+my_variable <- 10
+my_varıable
+#> Error in eval(expr, envir, enclos): object 'my_varıable' not found
+```
+#the i in the second variable is not correct
+
+```{r}
+library(tidyverse)
+
+ggplot(dota = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+fliter(mpg, cyl = 8)
+filter(diamond, carat > 3)
+
+
+#data is spelled wrong
+#the first filter is spelled wrong
+#diamond is missing the s
+```
+
+```{r}
+library(tidyverse)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl = 8)
+filter(diamonds, carat > 3)
+
+```
+
+
+```{r}
+#option, shift, K pulls up the shortcuts menu
+#I can also go to the toolbar at the top and click "tools" and then "Keyboard Shortcuts Help"
+
+```
+
