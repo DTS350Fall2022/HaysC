@@ -1,0 +1,104 @@
+---
+title: "Task 4 due 9/8"
+author: "Claire Hays"
+date: "9/7/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load packages}
+library(knitr)
+library(tidyverse)
+install.packages("nycflights13")
+library(nycflights13)
+```
+
+```{r convert data tibble & arrange by sepal.length & display first 10 rows}
+
+iris_data <- as_tibble(iris)
+arrange(iris_data, Sepal.Length)
+
+```
+
+```{r select species and petal.width; call it testdat}
+
+testdat <- select(iris_data, Species, Petal.Width)
+head(testdat)
+
+```
+
+```{r create a table that has the means for each variable for each species}
+
+species_mean <- iris_data %>%
+  group_by(Species)%>%
+  summarise(mean(Petal.Width),mean(Petal.Length),mean(Sepal.Width), mean(Sepal.Length), na.rm =TRUE)
+head(species_mean)
+
+```
+
+```{r create a dataframe called iris_min where Sepal.Width >= 3 and Pedal.Width != 2.5}
+
+iris_widths <- select(iris_data, Petal.Width, Sepal.Width)
+
+iris_min <- filter(iris_widths, Sepal.Width >= 3, Petal.Width != 2.5)
+head(iris_min)
+
+```
+
+```{r create small, medium, large categories (columns) based on conditions (create new columns with mutate)}
+
+iris_size <- iris_data %>%
+  mutate(Sepal.Size = case_when(
+                                  Sepal.Length < 5 ~ "small",
+                                  Sepal.Length >= 5 & Sepal.Length < 6.5 ~ "medium",
+                                  Sepal.Length >= 6.5 ~ "large"))
+head(iris_size)
+
+```
+
+```{r create a dataframe called iris_rank...}
+iris_rank <- arrange(iris_data, desc(Petal.Length))
+head(iris_rank)
+
+mutate(iris_rank, rank=min_rank(Petal.Length))
+head(iris_rank)
+
+```
+
+```{r summarize_all function; new table w/ means and st dev for each species}
+
+?summarise_all()
+
+species_means_and_st_dev <- iris_data %>%
+                            group_by(Species) %>%
+                            summarize_all(list(Mean=mean, St_Dev = sd))
+head(species_means_and_st_dev)
+species_means_and_st_dev
+
+```
+
+```{r Questions}
+
+#1 Is there a correlation, amongst teens, between depression and daily average of hours slept?
+#2 Is there a correlation, amongst teens, between depression and daily average of screen time ?
+#3 Is there a correlation, amongst teens, between depression and daily average of time spent participating in physical activity?
+```
+
+```{r Feedback}
+#Overall, the individuals I spoke with were very interested to see if there was a correlation between any of these three things with teen depression.  Several people suspected that the highest correlation would be between screen time and depression.
+```
+
+```{r Professional Feedback}
+
+#I talked to my dad, who is a doctor, about the quality of these questions and the ability for them to be answered in 2 months.  He said that these were high quality questions that could be answered over the next two months.  Every teen patient already gets a depression screening during normal checkups that results in a score.  He (or any physician) could then also ask the patient to recall the daily average of hours spent sleeping, using screen time, and participating in physical activity.  After two months, it would be possible to see if there were some correlations between any of these two comparisons, and if so, which two had the highest correlation. Some potential limits to this study would be that we are relying on patient recall.  Information will not be exact.  Also, there may be some fluctuation with seasons of the year, etc. 
+```
+
