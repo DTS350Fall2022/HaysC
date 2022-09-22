@@ -1,0 +1,93 @@
+---
+title: "Case Study 4"
+author: "Claire Hays"
+date: "9/21/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+    code_folding: 'hide'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+load packages
+```{r Packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+
+```
+
+QUESTION 2:
+Which origin airport is best to minimize my chances of a late arrival when I am using Delta Airlines?
+```{r filter data to answer question}
+str(flights)
+?flights
+
+delta_airline<- filter(flights, carrier == "DL") %>%
+  select(arr_delay, origin) %>%
+  drop_na() %>%
+  group_by(origin) %>%
+  summarise(avg_delay = mean(arr_delay))
+
+
+
+delta_airline
+
+```
+filter out delta airlines, then select the arrival delays and the origin to answer the question.
+group by the origin to determine which origin of airport has the least likelyhood to have a delay.
+we can see that EWR has a 8.78 min average delay, JFK has a 3.93 average delay, and JFK actually has a negative "average delay", so JFK on average actually arrives 2.38 minutes before arrival
+
+```{r plot the data}
+
+ggplot(data = delta_airline, aes(y= avg_delay, x= origin, fill = origin)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(y="Average Arrival Delay", x= "Origin Airport", title= "Which origin airport has the best average delay?", subtitle = "(When flying Delta Airlines)") +
+  theme_light()
+
+
+```
+
+
+QUESTION 3:
+Which destination airport is the worst (you decide on the metric for worst) airport for arrival time?
+
+```{r filter data}
+
+worst_delay <- flights %>%
+  select(arr_delay, dest) %>%
+  drop_na() %>%
+  group_by(dest) %>%
+  summarise(avg_delay = mean(arr_delay)) %>%
+  arrange(desc(avg_delay))
+
+worst_delay
+
+
+```
+I chose to decide which destination airport was the worst based on the average arrival delay to that airport.  You can see that a destination of CAE (an airport in Lexington County, South Carolina) has an average arrival delay of nearly 42 minutes.  That is a significant (and the worst) delay of all destination airports. 
+
+```{r make a visual}
+top_worst_delays <- worst_delay %>%
+  filter(avg_delay >= 18)
+
+ggplot(data = top_worst_delays, aes(y= avg_delay, x= dest, fill = dest)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label=round(avg_delay)), nudge_y = 2) +
+  scale_fill_brewer(palette = "Paired") +
+  labs(y="Average Arrival Delay", x= "Destination Airport", title= "Which destination airport has the worst arrival time?", subtitle = "Top 10 airports with the worst arrival times") +
+  theme_light()
+
+
+```
+
