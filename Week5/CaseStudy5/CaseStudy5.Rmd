@@ -1,0 +1,128 @@
+---
+title: "CaseStudy5"
+author: "Claire Hays"
+date: "9/26/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+packages
+```{r}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+
+```
+
+
+This data set is examining the deaths by gun in the U.S.
+
+recreate the graphs
+
+plot1
+```{r Plot 1}
+dat <- read_csv("full_data.csv")
+
+dat_plot1 <- dat %>%
+  filter(intent != "", age != "") %>%
+  mutate(agegroup = 
+           case_when(  
+             age >= 0 & age <= 14 ~ "under 15",
+             age >= 15 & age <= 34 ~ "15-34",
+             age >= 35 & age <= 64 ~ "35-64",
+             age >= 65 ~ "65+"),
+         agegroup = fct_relevel(agegroup,
+                                "under 15", "15-34", "35-64", "65+"))
+head(dat_plot1)
+
+plot1 <- ggplot(data = dat_plot1, mapping = aes(x = agegroup, fill = sex)) +
+  geom_bar() +
+  facet_wrap(~ intent, scales = 'free') +
+  labs(x = 'agegroup', 
+       y = 'count', 
+       title = 'Gun Deaths by Incident & Agegroup') +
+  theme_bw() 
+
+plot1
+
+```
+It is much more common (in every scenario) for men to be killed by a gun than women.  All categories are highest in the age group 15-34 and 35-64.  
+
+```{r Plot 2}
+
+dat2 <- dat %>%
+  drop_na()
+
+plot2 <- ggplot(data = dat2, mapping = aes(x = age)) +
+  facet_wrap(~sex) +
+  geom_density(aes(fill = intent), alpha = 0.5, position = "fill")  +
+  labs(title = "Gun Deaths by Incident Across all Agegroups",
+       subtitle = "F= Females; M= Males") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_bw()
+
+plot2
+```
+This plot allows use to view male and female separtatle.  We can see the density of each intent of death by gun.  Additionally, we can see the trends across all agegroups.
+
+
+
+investigate how seasons affect death by guns
+```{r Plot 3 and Plot 4}
+head(dat)
+tail(dat)
+str(dat)
+
+
+dat$month <- as.integer(dat$month)
+
+dat_seasons <- dat2 %>%
+  mutate(season =
+           case_when(
+             month == 12 | month <= 2 ~ "Winter",
+             month >= 3 & month <= 5 ~ "Spring",
+             month >= 6 & month <= 8 ~ "Summer",
+             month >= 9 & month <= 11 ~ "Fall"))
+dat_seasons
+
+
+plot3 <-ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
+  geom_bar() +
+  facet_wrap(~sex) +
+  facet_wrap(~ sex, scales = 'free') +
+  labs(x = 'Season', 
+       y = 'Count', 
+       title = 'Gun Deaths Each Season by Incident',
+       subtitle = "Split by Sex") +
+  theme_bw() 
+
+plot3
+
+ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
+  geom_bar() +
+  facet_wrap(~intent) +
+  facet_wrap(~ intent, scales = 'free') +
+  labs(x = 'Season', 
+       y = 'Count', 
+       title = 'Overal Gun Deaths Across Seasons',
+       subtitle = "Separated by Intent") +
+  theme_bw() 
+
+
+```
+
+plot3 compares, separately male and female, the gun deaths by each season.  The deaths are still classified by their intent.  You can see that there is only one season that that seems to reasonably stand out from the others and this is winter.  Winter stands out because it has less suicides during that season (this is true for both males and females, but more so true for males).  The other seasons appear to all be very similar.  
+
+plot4 allows for separate comparison of each season.  In this graph we are looking at total gun deaths (not split by sex).  Looking closer at each intent individually across the season, I noticed a new trend.  THis is that the their seems to be the least gun deaths per accient in the spring time. 
