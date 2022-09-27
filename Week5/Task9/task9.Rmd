@@ -1,0 +1,176 @@
+---
+title: "Task 9"
+author: "Claire Hays"
+date: "9/22/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+load packages
+```{r Packages}        
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+```
+
+Using the toothgrowth dataset
+```{r View data}
+dat <- ToothGrowth
+str(dat)
+head(dat)
+tail(dat)
+?ToothGrowth
+```
+
+
+I want to compare tooth length with delivery of OJ and tooth length with delivery of VC
+```{r }
+just_OJ <- dat %>%
+  filter(supp == "OJ")
+
+plot1_using_OJ <- ggplot(just_OJ, aes(x=len, y=dose)) + 
+  geom_point(aes(col= supp)) +
+  geom_smooth(method="loess", se=F) +
+  labs(
+       y="Dose", 
+       x="Length", 
+       title="How Dose and Supplement Affect Length",
+       subtitle="Delivery Method = Orange Juice (OJ)") +
+  theme_bw()
+
+plot1_using_OJ
+
+
+
+just_VC <- dat %>%
+  filter(supp == "VC")
+
+plot2_using_VC <- ggplot(just_VC, aes(x=len, y=dose)) + 
+  geom_point(aes(col= supp)) +
+  geom_smooth(method="loess", se=F) +
+  labs(
+       y="Dose", 
+       x="Length", 
+       title="How Dose and Supplement Affect Length",
+       subtitle="Delivery Method = Absorbic Acid (VC)") +
+  theme_bw()
+
+plot2_using_VC
+
+
+
+plot3_compare_oj_vc <- ggplot(dat, aes(x=len, y=dose)) + 
+  geom_point(aes(col= supp)) +
+  labs(
+       y="Dose", 
+       x="Length", 
+       title="How Dose and Supplement Affect Length") +
+      geom_smooth(method="loess", se=F) +
+  theme_bw()
+plot3_compare_oj_vc
+
+```
+
+I created a couple plots to see which dose had the best affect in increasing tooth length.  Since there were two delivery methods, I chose to look at these affects separately and then together.  The two delivery methods were orange juice (OJ) and absorbic acid (VC).  I created a scatter plot first and then added a geom_smooth line to help visualize the affect of increasing dose.  What I discovered was that as dose increases, so does tooth length.  This was true for both delivery method OJ and VC.  I created a third scatter plot with the two delivery methods together and this was still true.  So, regardless of delivery method, as the dose increases, the tooth length also increases. 
+
+
+
+using the flights dataset
+
+I am going to try and determine which month is most popular to fly depending on the origin airport.  then, I will create a second plot that 
+```{r View flights data}
+library(nycflights13)
+?flights
+str(flights)
+
+count_months <- flights %>%
+  select(month, origin) %>%
+  count(month)
+
+
+busy_months <- flights %>%
+  select(month, origin) %>%
+  drop_na() %>%
+  group_by(origin, month) %>%
+  summarise(tot_flights = n()) %>%
+  arrange(desc(tot_flights))
+
+
+tot_busy_months <- busy_months %>% 
+  group_by(origin) %>%
+  filter(tot_flights == max(tot_flights))
+
+
+pop_month <- ggplot(data = tot_busy_months, aes(y= tot_flights, x= origin, fill = origin)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label=tot_flights), nudge_y = 200) +
+  ggrepel::geom_label_repel(aes(label = month), data = tot_busy_months, nudge_y = -300) + 
+  scale_fill_brewer(palette = "Paired") +
+  labs(y="Total Flights", x= "Airline", title= "Most popular month to fly?", subtitle = "Below were the most popular months to fly according to NY airlines") +
+  theme_light()
+
+pop_month
+
+
+```
+
+(group by each airport, count by each month, pull out highest number 
+then group by without month and filter to get max count)
+
+I added a couple layers to this plot to discover the answer to my question.  This bar graph shows the busiest months of flying for three different airports in New York.  We can see that each airport had a month of the year with about 10,000 flights.  I added an element to define the exact number of flights for easier comparison. EWR had the most with 10,592, JFK had the second most with 10,023, and LGA came in third with 9,642 flights in one month.  The months are represented in the clear boxes towards to top of each bar.  EWR's busiest month was May.  JFK's busiest month was July.  LGA's busiest month was October.
+
+
+I want to look further at the trends over the months of just EWR over a year.
+```{r}
+
+EWR <- flights %>%
+  filter(origin == 'EWR')
+
+EWR_trends <- EWR %>%
+  select(month) %>%
+  drop_na() %>%
+  group_by(month) %>%
+  summarise(tot_flights = n())
+
+ggplot(EWR_trends, aes(x=month, y=tot_flights)) + 
+  geom_point(aes()) +
+  geom_smooth(method="loess", se=F) +
+  labs(
+       y="Flights", 
+       x="Month", 
+       title="How Dose and Supplement Affect Length",
+       subtitle="Delivery Method = Orange Juice (OJ)") +
+  theme_bw()
+
+
+EWR_2013 <- ggplot(data = EWR_trends, aes(y= tot_flights, x= month, fill = tot_flights)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_point() +
+  ggrepel::geom_label_repel(aes(label = month), data = EWR_trends, nudge_y = -1000) + 
+  labs(y="Total Flights", x= "Month", title= "Number of Flights out of EWR over the year 2013", subtitle = "Below were the most popular months to fly according to NY airlines") +
+  theme_light()
+
+EWR_2013
+
+```
+
+We saw from our previous graph that EWRs most popular month was the 5th month of the year.  This visual of just EWR allows us to see all 12 months and the trends across the whole year.  We can see that there are several other months that are nearly just as busy.  Overall, the EWR airport has thousands of flights a month, but the summer months were most popular while February was noticeably the least popular.  Similar to the last graph, I chose a bar graph that would allow me to compare the total flights across several months.  I also added the exact month that each bar was representing for easier viewing.  
+
+
+
+
+
+
+
