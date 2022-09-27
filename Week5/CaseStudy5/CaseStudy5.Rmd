@@ -110,7 +110,7 @@ plot3 <-ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
 
 plot3
 
-ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
+plot4 <- ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
   geom_bar() +
   facet_wrap(~intent) +
   facet_wrap(~ intent, scales = 'free') +
@@ -118,7 +118,10 @@ ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
        y = 'Count', 
        title = 'Overal Gun Deaths Across Seasons',
        subtitle = "Separated by Intent") +
-  theme_bw() 
+  theme_bw()
+
+plot4
+
 
 
 ```

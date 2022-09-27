@@ -263,7 +263,7 @@ plot3
 ![](CaseStudy5_files/figure-html/Plot 3 and Plot 4-1.png)<!-- -->
 
 ```r
-ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
+plot4 <- ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
   geom_bar() +
   facet_wrap(~intent) +
   facet_wrap(~ intent, scales = 'free') +
@@ -271,7 +271,9 @@ ggplot(data = dat_seasons, mapping = aes(x = season, fill = intent)) +
        y = 'Count', 
        title = 'Overal Gun Deaths Across Seasons',
        subtitle = "Separated by Intent") +
-  theme_bw() 
+  theme_bw()
+
+plot4
 ```
 
 ![](CaseStudy5_files/figure-html/Plot 3 and Plot 4-2.png)<!-- -->
