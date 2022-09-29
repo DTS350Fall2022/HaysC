@@ -1,0 +1,121 @@
+---
+title: "Task 10"
+author: "Claire Hays"
+date: "9/27/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+```{r Packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(COR)
+library(corrplot)
+
+```
+
+```{r Explore}
+
+devtools::install_github("drsimonj/ourworldindata")
+
+getwd()
+dat <- read_csv('financing_healthcare.csv')
+str(dat)
+head(dat)
+tail(dat)
+
+child <- dat %>%
+  select(year, country, child_mort) %>%
+  drop_na()
+  
+
+child_count <- child %>%
+  select(country) %>%
+  summarise(tot_country = n())
+
+summary(child)
+str(child)
+
+child %>%
+  count(country)
+```
+
+```{r Histogram}
+
+ggplot(data = child, mapping = aes(x = year)) +
+  geom_histogram(binwidth = 5)
+
+
+```
+
+I started by plotting a histogram to get a general idea of child mortality over the years.
+There was almost no death from 1750 - 1800. This seemed bizarre to me, so I am going to look at this more.  From 1800 - 1930 it was relatively steady.  Around the 1950s there was a significant drip in mortality only for the numbers to increase until about 2000.  Entering into the 2000s, we see an extremely significant drop in child mortality.  
+
+
+```{r 18th century}
+
+century18 <- child %>%
+  filter(year < 1800)
+
+ggplot(data = century18, mapping = aes(x = year)) +
+  geom_histogram(binwidth = 10)
+
+ggplot() +
+  geom_point(data = century18, aes(x = year, y = child_mort, color = country))
+
+
+
+```
+Now, we can see that these numbers were so low because the only country on record was Sweden.
+
+```{r Just US}
+
+child2 <- dat %>%
+  select(year, country, child_mort, life_expectancy) %>%
+  drop_na()
+  
+after1800 <- child2 %>%
+  filter(year > 1800) %>%
+  filter(country == 'United States')
+
+summary(after1800)
+
+ggplot() +
+  geom_point(data = after1800, aes(x = year, y = life_expectancy, color = country)) +
+  geom_point(data = after1800, aes(x = year, y = child_mort, color = country))
+
+
+  
+```
+I decided to filter out the years before 1800 since those only had the data from Sweden. Then I decided to look just at the U.S. child_mortality versus life expectancy.  I plotted both these variable using a geom_point.  It seemed that these were negatively correlated, which would make since so I plotted a corrplot below.  
+
+```{r Correlation of child_mort and life_expectancy in US}
+
+
+justUS <- after1800 %>%
+  select(life_expectancy, child_mort)
+
+corrplot(cor(justUS), method = "ellipse",
+                          type = "upper",
+                          order = "hclust",
+                          tl.col = "black",
+                          tl.srt = 45) 
+
+
+```
+
+This corrplot confirms my expectation that in the U.S. as child mortality went down the life expectancy went up.  We can see this because there is a strongly negavtive correlation between the two variables.  
