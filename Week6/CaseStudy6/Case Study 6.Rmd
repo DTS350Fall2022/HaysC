@@ -1,0 +1,207 @@
+---
+title: "Case Study 6"
+author: "Claire Hays"
+date: "10/3/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(COR)
+
+```
+
+
+```{r Visualizations for x, y, & z}
+?diamonds
+dat <- diamonds
+
+head(dat)
+
+length <- ggplot(data = dat, aes(x = x)) +
+  geom_histogram(binwidth = .3) +
+  coord_cartesian(xlim = c(3,10), ylim = c(0, 7500), expand = FALSE) +
+  labs(
+        title = "Distrubution of Diamonds by Length",
+        x = "Count",
+        y = "Length"
+  )+
+  theme_bw()
+length
+
+
+width <- ggplot(data = dat, aes(x = y)) +
+  geom_histogram(binwidth = .3) +
+  coord_cartesian(xlim = c(0,15), ylim = c(0, 7500), expand = FALSE) +
+    labs(
+        title = "Distrubution of Diamonds by Width",
+        x = "Count",
+        y = "Width"
+  )+
+  theme_bw()
+width 
+
+
+depth <- ggplot(data = dat, aes(x = z)) +
+  geom_histogram(binwidth = .3) +
+  coord_cartesian(xlim = c(0,8), ylim = c(0, 15000), expand = FALSE) +
+    labs(
+        title = "Distrubution of Diamonds by Depth",
+        x = "Count",
+        y = "Depth"
+  )+
+  theme_bw()
+depth
+
+```
+
+
+```{r Price}
+
+price <- ggplot(data = dat, aes(x = price)) +
+  geom_histogram() +
+    labs(
+        title = "Distrubution of Diamond Prices",
+        x = "Price",
+        y = "Count"
+  )+
+  theme_bw()
+price
+
+```
+
+
+```{r Variables that predicts Price}
+?diamonds
+
+carat <- ggplot(data = dat, mapping = aes(y = price, x = carat)) +
+  geom_smooth() 
+carat
+
+cut <- ggplot(data = dat, mapping = aes(y = price, x = cut)) +
+  geom_boxplot() 
+cut
+
+color <- ggplot(data = dat, mapping = aes(y = price, x = color)) +
+  geom_boxplot() 
+color
+
+clarity <- ggplot(data = dat, mapping = aes(y = price, x = clarity)) +
+  geom_boxplot() 
+clarity
+```
+The variable that has the most impact on price is carat.  Color also has a noticeable impact and clarity.  Cut seemed to provide the least helpful prediction on price.    
+
+```{r How is carat correlated with cut}
+
+cuts <- diamonds %>%
+  mutate(cut = 
+           case_when(
+             cut == 'Fair' ~ '1',
+             cut == 'Good' ~ '2',
+             cut == 'Very Good' ~ '3',
+             cut == 'Premium' ~ '4',
+             cut == 'Ideal' ~ '5'),
+         cut = fct_relevel(cut, '1','2','3','4','5'))
+cuts
+
+cut_and_carat <- cuts %>%
+  select(carat, cut)
+
+cut_and_carat$cut <- as.integer(cut_and_carat$cut)
+
+
+corrplot(cor(cut_and_carat), method = "ellipse",
+                          type = "upper",
+                          order = "hclust",
+                          tl.col = "black",
+                          tl.srt = 45)
+
+```
+
+They are somewhat correlated but not strongly.
+
+```{r Carat partitioned by price}
+
+summary(dat)
+
+dat_split_price <- dat %>%
+  mutate(pricebygroup = 
+           case_when(
+             price >= 1 & price <= 2000 ~ '1-2000',
+             price >= 2001 & price <= 4000 ~ '2001-4000',
+             price >= 4001 & price <= 6000 ~ '4001-6000',
+             price >= 6001 & price <= 8000 ~ '6001-8000',
+             price >= 8001 & price <= 10000 ~ '8001-10000',
+             price >= 10001 & price <= 12000 ~ '10001-12000',
+             price >= 12001 & price <= 14000 ~ '12001-14000',
+             price >= 14001 & price <= 16000 ~ '14001-16000',
+             price >= 16001 & price <= 18000 ~ '16001-18000',
+             price >= 18001 & price <= 20000 ~ '18001-20000'),
+         pricebygroup = fct_relevel(pricebygroup, '1-2000', '2001-4000', '4001-6000', '6001-8000', '8001-10000', '10001-12000', 
+                                    '12001-14000', '14001-16000', '16001-18000', '18001-20000'))
+
+
+price_groups <- ggplot(data = dat_split_price, mapping = aes(x = pricebygroup, y = carat)) +
+  geom_col() +
+  coord_flip()
+  theme_bw()
+  
+price_groups
+        
+```
+
+
+```{r Small and Large carats}
+summary(dat)
+
+ggplot(data = dat, mapping = aes(x = carat, y = price)) +
+  geom_smooth() 
+
+small_carat <- dat %>%
+  filter(carat <= 3.5)
+
+small_plot <- ggplot(data = small_carat, aes(x = carat)) +
+  geom_histogram()
+small_plot
+
+
+
+large_carat <- dat %>%
+  filter(carat > 3.5)
+
+large_plot <- ggplot(data = large_carat, aes(x = carat)) +
+  geom_histogram()
+large_plot
+
+
+```
+
+Distributions becomes more spread out as the carat is larger.  
+
+```{r Cut, Carat, Price}
+
+
+three <- ggplot(data = dat, mapping = aes(x = carat, y = price, color = cut)) +
+  geom_point() +
+  facet_wrap(~cut)
+three
+```
+
