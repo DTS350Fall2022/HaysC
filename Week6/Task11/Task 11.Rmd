@@ -1,0 +1,67 @@
+---
+title: "Task 11"
+author: "Claire Hays"
+date: "10/3/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+
+```
+
+
+```{r Load dat}
+
+
+dat <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/fandango/fandango_score_comparison.csv")
+head(dat)
+str(dat)
+summary(dat)
+```
+
+
+```{r Tidy dat}
+
+clean_dat <- dat %>%
+  select(FILM, RT_norm, Metacritic_norm, IMDB_norm, Fandango_Ratingvalue) %>%
+  pivot_longer(2:5, names_to = "site", values_to = "score") %>%
+  select(FILM, site, score)
+
+clean_dat_20 <- head(clean_dat, n=20)
+clean_dat_20
+
+```
+
+
+```{r Graph}
+
+graph1 <- ggplot(clean_dat_20, aes(x = site, y = score)) +
+  geom_col() +
+  facet_wrap(~FILM) +
+  labs(title = "Fandago Scores by Film and Site",
+       y = "Score",
+       x = "Site") +
+  theme_bw() 
+
+graph1
+
+```
+
+In every movie, Fandago Rating had the highest score and IMDB norm had a higher score than Metacritic norm.  The fourth site, RT norm, was inconsistent on how it ranked in comparison to the other sites. 
