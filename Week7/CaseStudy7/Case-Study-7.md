@@ -145,7 +145,7 @@ head(dat_heights2)
 ```
 
 ```
-## [1] "/var/folders/8m/yx48gzxn5xn93msvzwqvq0880000gn/T//RtmpdwFiJb/file387a2582b323"
+## [1] "/var/folders/8m/yx48gzxn5xn93msvzwqvq0880000gn/T//RtmpSx3DYc/file3ac610e6532f"
 ```
 
 ```r
@@ -179,7 +179,7 @@ head(dat_heights3)
 ```
 
 ```
-## [1] "/var/folders/8m/yx48gzxn5xn93msvzwqvq0880000gn/T//RtmpdwFiJb/file387a27bed212"
+## [1] "/var/folders/8m/yx48gzxn5xn93msvzwqvq0880000gn/T//RtmpSx3DYc/file3ac615f3b54"
 ```
 
 ```r
@@ -7245,5 +7245,27 @@ write.csv(combine,"height_dat.csv", row.names = TRUE)
 ```r
 germany <- tidy_xlsx_heights %>%
   filter(`Continent, Region, Country` == 'Germany')
+
+plot1 <- ggplot(data = tidy_xlsx_heights, aes(x = year_decade, y = height.in)) +
+  geom_boxplot(alpha = 0.5) +
+  geom_point(data = germany, color = "red") 
+plot1
 ```
 
+![](Case-Study-7_files/figure-html/Germany-1.png)<!-- -->
+
+```r
+plot2 <- ggplot() +
+    geom_col(data = combine, aes(x = birth_year, y = height.in)) +
+    facet_wrap(~study_id, scales = "free")
+plot2
+```
+
+```
+## Warning: Removed 1361 rows containing missing values (position_stack).
+```
+
+![](Case-Study-7_files/figure-html/Germany-2.png)<!-- -->
+
+Germany seems to have been following an upward trend that is above the world average. 
+Have human been getting taller?  Maybe.  The data does not give a clear answer.  In the Wisconsin data set for the 19th century it certainly seemed that way for a while but then there was steep decline.  

@@ -143,5 +143,16 @@ write.csv(combine,"height_dat.csv", row.names = TRUE)
 germany <- tidy_xlsx_heights %>%
   filter(`Continent, Region, Country` == 'Germany')
 
+plot1 <- ggplot(data = tidy_xlsx_heights, aes(x = year_decade, y = height.in)) +
+  geom_boxplot(alpha = 0.5) +
+  geom_point(data = germany, color = "red") 
+plot1
+
+plot2 <- ggplot() +
+    geom_col(data = combine, aes(x = birth_year, y = height.in)) +
+    facet_wrap(~study_id, scales = "free")
+plot2
 ```
 
+Germany seems to have been following an upward trend that is above the world average. 
+Have human been getting taller?  Maybe.  The data does not give a clear answer.  In the Wisconsin data set for the 19th century it certainly seemed that way for a while but then there was steep decline.  
