@@ -1,0 +1,147 @@
+---
+title: "Case Study 7"
+author: "Claire Hays"
+date: "10/10/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(COR)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+
+```
+
+
+```{r import 6 data sets}
+
+dat_german_con <- read_dta(url("https://github.com/WJC-Data-Science/DTS350/blob/master/germanconscr.dta?raw=true"))
+head(dat_german_con)
+
+dat_german_prison <- read_dta(url("https://github.com/WJC-Data-Science/DTS350/blob/master/germanprison.dta?raw=true"))
+head(dat_german_prison)
+
+csv_heights <- read_csv(url("https://raw.githubusercontent.com/hadley/r4ds/master/data/heights.csv"))
+head(csv_heights)
+
+dat_heights2 <- tempfile()
+download("https://github.com/WJC-Data-Science/DTS350/blob/master/Height.xlsx?raw=true", dat_heights2, mode = "wb")
+head(dat_heights2)
+
+xlsx_heights <- read_xlsx(dat_heights2, skip = 2)
+head(xlsx_heights)
+
+dat_heights3 <- tempfile()
+download("https://github.com/WJC-Data-Science/DTS350/raw/master/Heights_south-east/B6090.DBF?raw=true", dat_heights3, mode = "wb")
+head(dat_heights3)
+
+dbf_heights <- read.dbf(dat_heights3)
+head(dbf_heights)
+
+dat_wisconsin=read.spss("http://www.ssc.wisc.edu/nsfh/wave3/NSFH3%20Apr%202005%20release/main05022005.sav", to.data.frame=TRUE)
+write.table(dat_wisconsin,"Wisconsin.csv")
+head(dat_wisconsin)
+
+```
+
+```{r tidy german conscript}
+
+tidy_dat_german_con <- dat_german_con %>% 
+    mutate(birth_year = bdec, 
+           height.cm = height, 
+           height.in = height.cm / 2.54,
+          study_id = 'German Conscripts 19th cent') %>%  
+  select(birth_year, height.cm, height.in, study_id)
+
+```
+
+```{r tidy german prison}
+
+tidy_dat_german_prison <- dat_german_prison %>% 
+    mutate(birth_year = bdec, 
+           height.cm = height, 
+           height.in = height.cm / 2.54,
+          study_id = 'German Prison 19th cent') %>%  
+  select(birth_year, height.cm, height.in, study_id)
+
+```
+
+```{r tidy csv heights}
+
+tidy_csv_heights <- csv_heights %>%  
+  mutate(birth_year = 1950,
+         height.in = height,
+         height.cm = height.in * 2.54,
+         study_id = 'Heights') %>%  
+  select(birth_year, height.cm, height.in, study_id)
+
+```
+
+```{r tidy xlsx heights}
+
+tidy_xlsx_heights <- xlsx_heights %>%  
+  pivot_longer(3:203, names_to = "years", values_to = "heights.cm", values_drop_na = TRUE) %>%   
+  mutate(year_decade = years, 
+         height.in = heights.cm / 2.54) %>%  
+  separate(years, into = c("century", "decade"), sep = -2) %>%  
+  separate(decade, into = c("decade", "year"), sep = -1)
+write.csv(tidy_xlsx_heights,"xlsx_heights.csv", row.names = TRUE)
+
+```
+
+```{r tidy dbf heights}
+
+tidy_dbf_heights <- dbf_heights %>%  
+  mutate(height.in = CMETER / 2.54,
+         height.cm = CMETER,
+         birth_year = SJ,
+         study_id = 'Heights 18th century') %>%  
+  select(height.in, height.cm, birth_year, study_id)
+
+
+```
+
+```{r tidy wisconsin}
+
+tidy_dat_wisconsin <- dat_wisconsin %>%  
+  mutate(birth_year = as.numeric(DOBY) + 1900, 
+         height.in = RT216F*12 + RT216I, 
+         height.cm = height.in * 2.54, 
+         study_id = 'Wisconsin 19th century') %>%  
+  select(birth_year, height.in, height.cm, study_id)
+
+```
+
+```{r combine}
+
+combine <- bind_rows(tidy_dat_german_con, tidy_dat_german_prison, tidy_csv_heights, tidy_xlsx_heights, tidy_dbf_heights, tidy_dat_wisconsin)
+write.csv(combine,"height_dat.csv", row.names = TRUE)
+
+```
+
+```{r Germany}
+germany <- tidy_xlsx_heights %>%
+  filter(`Continent, Region, Country` == 'Germany')
+
+```
+
