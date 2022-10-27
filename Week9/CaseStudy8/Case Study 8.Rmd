@@ -1,0 +1,112 @@
+---
+title: "Case Study 8"
+author: "Claire Hays"
+date: "10/25/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(COR)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+
+```
+
+```{r read in data}
+sales_dat <- tempfile()
+download("https://github.com/WJC-Data-Science/DTS350/raw/master/sales.csv", sales_dat, mode = "wb")
+dat <- read_csv(sales_dat)
+head(dat)
+str(dat)
+summary(dat)
+```
+
+```{r change timezone}
+sales <- with_tz(dat, tzone = "US/Mountain")
+```
+
+```{r time aggregations}
+sales_time <- sales %>%
+  mutate(Month = month(Time, label = TRUE, abbr = FALSE)) %>%
+  mutate(Week = week(Time)) %>%
+  mutate(Day = wday(Time, label = TRUE, abbr = FALSE)) %>%
+  mutate(Hour = hour(Time)) 
+
+head(sales_time)
+tail(sales_time)
+summary(sales_time)
+```
+
+```{r reccomendations}
+HOURS <- sales_time %>%
+  group_by(Name, Hour) %>%
+  select(Name, Amount, Hour) %>%
+  ggplot(aes(x=Hour, y=Amount, Color=Name)) +
+  geom_col() +
+  facet_wrap(~Name) +
+  labs(title = "Amount Sold per Hour for Each Store",
+       x = "Hour of Day",
+       y = "Amount Sold") +
+  theme_bw()
+
+
+DAYS <- sales_time %>%
+  group_by(Name, Day) %>%
+  select(Name, Amount, Day) %>%
+  ggplot(aes(x=Day, y=Amount, Color=Name)) +
+  geom_col() +
+  facet_wrap(~Name) +
+  labs(title = "Amount Sold per Day of Week for Each Store",
+       x = "Day of Week",
+       y = "Amount Sold") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+MONTHS <- sales_time %>%
+  group_by(Name, Month) %>%
+  select(Name, Amount, Month) %>%
+  ggplot(aes(x=Month, y=Amount, Color=Name)) +
+  geom_col() +
+  facet_wrap(~Name) +
+  labs(title = "Amount Sold per Month for Each Store",
+       x = "Month",
+       y = "Amount Sold") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+```
+I would recommend hours of operation be between 8am and 9pm, with customer traffic being the busiest between 10am and 4pm for just about every restaruant.  I also reccomend operating during the weekdays.  Weekend sales are low amongst all stores.  We are only comparing a few months of the year, but it does appear the June is the busiest month for almost all the sotres (except LeBelle). 
+
+```{r final comparison}
+COMPARE <- sales_time %>%
+  group_by(Name) %>%
+  ggplot(aes(x=Name, y=Amount, Color=Name)) +
+  geom_col() +
+  labs(title = "Sales Across All Stores",
+       x = " ",
+       y = "Sales") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+I reccomend waiting to open Frozone until June.
