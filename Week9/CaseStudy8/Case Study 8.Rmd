@@ -2,9 +2,9 @@
 title: "Case Study 8"
 author: "Claire Hays"
 date: "10/25/2022"
-output: html_document
-editor_options: 
-  chunk_output_type: console
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +21,6 @@ library(lubridate)
 library(ggplot2)
 library(grid)
 library(corrplot)
-library(COR)
 library(readr) 
 library(haven)
 library(readxl)
@@ -31,20 +30,20 @@ library(stringi)
 
 ```
 
-```{r read in data}
+```{r Data}
 sales_dat <- tempfile()
-download("https://github.com/WJC-Data-Science/DTS350/raw/master/sales.csv", sales_dat, mode = "wb")
-dat <- read_csv(sales_dat)
+download("https://github.com/WJC-Data-Science/DTS350/raw/master/sales.csv", "sales_dat", mode = "wb")
+dat <- read_csv("sales_dat")
 head(dat)
 str(dat)
 summary(dat)
 ```
 
-```{r change timezone}
+```{r Timezone}
 sales <- with_tz(dat, tzone = "US/Mountain")
 ```
 
-```{r time aggregations}
+```{r Time}
 sales_time <- sales %>%
   mutate(Month = month(Time, label = TRUE, abbr = FALSE)) %>%
   mutate(Week = week(Time)) %>%
@@ -56,7 +55,7 @@ tail(sales_time)
 summary(sales_time)
 ```
 
-```{r reccomendations}
+```{r Reccomendations}
 HOURS <- sales_time %>%
   group_by(Name, Hour) %>%
   select(Name, Amount, Hour) %>%
@@ -68,6 +67,7 @@ HOURS <- sales_time %>%
        y = "Amount Sold") +
   theme_bw()
 
+HOURS
 
 DAYS <- sales_time %>%
   group_by(Name, Day) %>%
@@ -81,6 +81,7 @@ DAYS <- sales_time %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+DAYS
 
 MONTHS <- sales_time %>%
   group_by(Name, Month) %>%
@@ -93,11 +94,12 @@ MONTHS <- sales_time %>%
        y = "Amount Sold") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  
-```
-I would recommend hours of operation be between 8am and 9pm, with customer traffic being the busiest between 10am and 4pm for just about every restaruant.  I also reccomend operating during the weekdays.  Weekend sales are low amongst all stores.  We are only comparing a few months of the year, but it does appear the June is the busiest month for almost all the sotres (except LeBelle). 
 
-```{r final comparison}
+MONTHS  
+```
+I would recommend hours of operation be between 8am and 9pm, with customer traffic being the busiest between 10am and 4pm for just about every restaurant.  I also recommend operating during the weekdays.  Weekend sales are low amongst all stores.  We are only comparing a few months of the year, but it does appear the June is the busiest month for almost all the stores (except LeBelle). 
+
+```{r Comparison}
 COMPARE <- sales_time %>%
   group_by(Name) %>%
   ggplot(aes(x=Name, y=Amount, Color=Name)) +
@@ -107,6 +109,8 @@ COMPARE <- sales_time %>%
        y = "Sales") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+COMPARE
 ```
 
-I reccomend waiting to open Frozone until June.
+I recommend waiting to open Frozone until June.

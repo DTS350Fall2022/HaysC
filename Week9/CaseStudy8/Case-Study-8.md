@@ -4,10 +4,7 @@ author: "Claire Hays"
 date: "10/25/2022"
 output: 
   html_document:
-    theme: cosmo
     keep_md: true
-editor_options: 
-  chunk_output_type: console
 ---
 
 
@@ -23,7 +20,7 @@ library(tidyverse)
 
 ```
 ## ✔ ggplot2 3.3.5     ✔ purrr   0.3.4
-## ✔ tibble  3.1.6     ✔ dplyr   1.0.8
+## ✔ tibble  3.1.8     ✔ dplyr   1.0.8
 ## ✔ tidyr   1.2.0     ✔ stringr 1.4.0
 ## ✔ readr   2.1.2     ✔ forcats 0.5.1
 ```
@@ -63,7 +60,6 @@ library(corrplot)
 ```
 
 ```r
-library(COR)
 library(readr) 
 library(haven)
 library(readxl)
@@ -75,8 +71,8 @@ library(stringi)
 
 ```r
 sales_dat <- tempfile()
-download("https://github.com/WJC-Data-Science/DTS350/raw/master/sales.csv", sales_dat, mode = "wb")
-dat <- read_csv(sales_dat)
+download("https://github.com/WJC-Data-Science/DTS350/raw/master/sales.csv", "sales_dat", mode = "wb")
+dat <- read_csv("sales_dat")
 ```
 
 ```
@@ -112,7 +108,7 @@ str(dat)
 ```
 
 ```
-## spec_tbl_df [15,656 × 4] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+## spc_tbl_ [15,656 × 4] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
 ##  $ Name  : chr [1:15656] "Tacontento" "Tacontento" "Tacontento" "Tacontento" ...
 ##  $ Type  : chr [1:15656] "Food(prepared)" "Food(prepared)" "Food(prepared)" "Food(prepared)" ...
 ##  $ Time  : POSIXct[1:15656], format: "2016-05-16 19:01:00" "2016-05-16 19:01:00" ...
@@ -236,7 +232,12 @@ HOURS <- sales_time %>%
        y = "Amount Sold") +
   theme_bw()
 
+HOURS
+```
 
+![](Case-Study-8_files/figure-html/Reccomendations-1.png)<!-- -->
+
+```r
 DAYS <- sales_time %>%
   group_by(Name, Day) %>%
   select(Name, Amount, Day) %>%
@@ -249,7 +250,12 @@ DAYS <- sales_time %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+DAYS
+```
 
+![](Case-Study-8_files/figure-html/Reccomendations-2.png)<!-- -->
+
+```r
 MONTHS <- sales_time %>%
   group_by(Name, Month) %>%
   select(Name, Amount, Month) %>%
@@ -261,8 +267,12 @@ MONTHS <- sales_time %>%
        y = "Amount Sold") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+MONTHS  
 ```
-I would recommend hours of operation be between 8am and 9pm, with customer traffic being the busiest between 10am and 4pm for just about every restaruant.  I also reccomend operating during the weekdays.  Weekend sales are low amongst all stores.  We are only comparing a few months of the year, but it does appear the June is the busiest month for almost all the sotres (except LeBelle). 
+
+![](Case-Study-8_files/figure-html/Reccomendations-3.png)<!-- -->
+I would recommend hours of operation be between 8am and 9pm, with customer traffic being the busiest between 10am and 4pm for just about every restaurant.  I also recommend operating during the weekdays.  Weekend sales are low amongst all stores.  We are only comparing a few months of the year, but it does appear the June is the busiest month for almost all the stores (except LeBelle). 
 
 
 ```r
@@ -275,6 +285,10 @@ COMPARE <- sales_time %>%
        y = "Sales") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+COMPARE
 ```
 
-I reccomend waiting to open Frozone until June.
+![](Case-Study-8_files/figure-html/Comparison-1.png)<!-- -->
+
+I recommend waiting to open Frozone until June.
