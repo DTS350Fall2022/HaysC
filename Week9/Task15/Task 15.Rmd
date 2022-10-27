@@ -1,0 +1,89 @@
+---
+title: "Task 15"
+author: "Claire Hays"
+date: "10/25/2022"
+output: 
+  html_document:
+    theme: cosmo
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(COR)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(riem)
+library(plotly)
+```
+
+```{r read in data}
+carwash_dat <- tempfile()
+download("https://github.com/WJC-Data-Science/DTS350/raw/master/carwash.csv", carwash_dat, mode = "wb")
+dat <- read_csv(carwash_dat)
+head(dat)
+tail(dat)
+summary(dat)
+```
+
+```{r change timezone}
+dat <- with_tz(dat, tzone = "US/Mountain")
+```
+
+```{r hourly grouping}
+dat_hours <- dat %>%
+  mutate(hour = ceiling_date(time, "hour"))
+```
+
+```{r time aggregations}
+hourly_sales <- dat_hours %>%
+  group_by(hour) %>%
+  summarise(across(amount, sum))
+```
+
+```{r retrieve the matching temperatures and create hourly grouping}
+temps <- riem_measures(station = "RXE",  date_start ="2016-05-13", date_end  ="2016-07-08")
+summary(temps)
+temperatures <- temps %>%
+  with_tz(tzone = "US/Mountain") %>%
+  mutate(hour = ceiling_date(valid, "hour")) %>%
+  drop_na(tmpf) %>%
+  filter(tmpf != " ") %>%
+  select(hour, tmpf)
+```
+
+```{r merge}
+merged <- merge(temperatures, hourly_sales, by = "hour")
+```
+
+```{r visualization}
+new_dat <- merged %>%
+  mutate(hour = hour(hour)) %>%
+  group_by(hour) %>%
+  select(hour, tmpf, amount) %>%
+  ggplot(aes(x=tmpf, y=amount, color=hour)) +
+  geom_point() +
+  facet_wrap(~hour) +
+  labs(title = "Relationship Between Sales and Temperature",
+       x = "Temperature",
+       y = "Sales") +
+  theme_bw() 
+```
+
