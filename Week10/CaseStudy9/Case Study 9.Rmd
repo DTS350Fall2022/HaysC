@@ -1,0 +1,68 @@
+---
+title: "Case Study 9"
+author: "Claire Hays"
+date: "11/2/2022"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+
+```
+
+```{r function}
+tickers_today <- c("CXW", "F", "GM", "KR", "WDC", "NKE","T", "WDAY", "WFC", "WMT")
+
+end <- today()
+start <- today() - years(5)
+
+tickers_function <- function(tickers_today) {
+  tq_get(tickers_today, get = "stock.prices", from = start, to = end) %>%
+  select(symbol, date, adjusted) %>%
+  pivot_wider(names_from = symbol, values_from = adjusted) %>%
+  tk_xts(date_var = date) %>%
+  dygraph()
+}
+
+tickers_function(tickers_today)
+
+```
+This functin will allow me to easily switch the tickers of the day.  This function will use a dygraph() to show the performance of the stocks over time. 
+```{r volume}
+ 
+volume_function <- function(tickers_today) {
+  tq_get(tickers_today, get = "stock.prices", from = start, to = end) %>%
+  ggplot(aes(x=date, y=volume, color=symbol)) +
+    geom_line() +
+    labs(title = "Stock Volume",
+         x = "Date",
+         y = "Volume") +
+    theme_bw()
+}
+
+volume_function(tickers_today)
+```
+This function will also allow me to easily switch the tickers of the day, and have a graph that will show the stock volume of those selected over time. Antyhing compared overtime is best represented with a line graph. 
