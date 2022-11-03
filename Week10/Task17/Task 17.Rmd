@@ -1,0 +1,82 @@
+---
+title: "Task 17"
+author: "Claire Hays"
+date: "11/2/2022"
+output: 
+  html_document:
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+```
+
+```{r stocks}
+#dad's:
+(Apple <- tq_get("AAPL", get = "stock.prices"))
+(Tesla <- tq_get("TSLA", get = "stock.prices"))
+(Nike <- tq_get("NKE", get = "stock.prices"))
+
+#mine:
+(Amazon <- tq_get("AMZN", get = "stock.prices"))
+(Twitter <- tq_get("TWTR", get = "stock.prices"))
+(Facebook <- tq_get("META", get = "stock.prices"))
+
+
+end <- today()
+start <- as.Date("2021-10-01")
+
+
+dad <- tq_get(c("AAPL", "TSLA", "NKE"), get = "stock.prices", from = start, to = end)
+me <- tq_get(c("AMZN", "TWTR", "META"), get = "stock.prices", from = start, to = end)
+both <- tq_get(c("AAPL", "TSLA", "NKE", "AMZN", "TWTR", "META"), get = "stock.prices", from = start, to = end)
+head(both)
+```
+
+```{r winner}
+winner <- ggplot(data = both, mapping = aes(x = date, y = adjusted, color = symbol)) +
+  geom_line() +
+  labs(title = "Stock Prices Over the Past Year",
+       subtitle = "Apple, Amazon, Meta, Nike, Tesla, Twitter",
+       x = "Date",
+       y = "Adjusted Stock Price") +
+  theme_bw()
+winner
+
+compare <- ggplot(data = both, mapping = aes(x = date, y = adjusted, color = symbol)) +
+  geom_line() +
+  facet_wrap(~symbol)+
+  labs(title = "Stock Prices Over the Past Year",
+     subtitle = "Apple, Amazon, Meta, Nike, Tesla, Twitter",
+     x = "Date",
+     y = "Adjusted Stock Price") +
+ theme_bw()
+compare
+```
+
+Overall, Dad is winning because of his TSLA stock.  Dad's Apple stock and Nike stock is similar in performance to my Amazon stock. My twitter stock is the lowest and my facebook stock started off strong but has been on a decline over the past year.  
+
+My first visualization was a simple line graph comparing the six graphs over the past year using a line graph.  It allowed for alot of information to be displayed in one graph.  I can see approximately who was the winner has been over the past year and overall performance.  My second visualization, I still did a line graph but decided it would be helpful to facet by the stock so I could see better who the winner was.  
