@@ -34,7 +34,7 @@ library(dygraphs)
 ```
 
 ```{r function}
-tickers_today <- c("CXW", "F", "GM", "KR", "WDC", "NKE","T", "WDAY", "WFC", "WMT")
+tickers_today <- c("QQQ", "MO", "KO", "ABB", "LH", "CINF")
 
 end <- today()
 start <- today() - years(5)
@@ -50,7 +50,7 @@ tickers_function <- function(tickers_today) {
 tickers_function(tickers_today)
 
 ```
-This functin will allow me to easily switch the tickers of the day.  This function will use a dygraph() to show the performance of the stocks over time. 
+This functi0n will allow me to easily switch the tickers of the day.  This function will use a dygraph() to show the performance of the stocks over time. 
 ```{r volume}
  
 volume_function <- function(tickers_today) {
