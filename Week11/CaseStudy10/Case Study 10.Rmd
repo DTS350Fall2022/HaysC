@@ -1,0 +1,120 @@
+---
+title: "Case Study 10"
+author: "Claire Hays"
+date: "11/8/2022"
+output: 
+  html_document:
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+library(sf)
+library(USAboundaries)
+library(USAboundariesData)
+library(ggsflabel)
+library(maps)
+```
+
+```{r data}
+temp <- tempfile()
+download.file("https://github.com/WJC-Data-Science/DTS350/raw/master/permits.csv", "temp")
+permits_dat <- read_csv("temp")
+head(permits_dat)
+counties <- us_counties()
+```
+
+```{r FIPS}
+FIPS <-permits_dat %>%
+  mutate(state=as.character(state), stateFIPS=str_pad(state, 2,pad="0")) %>%
+  mutate(county=as.character(county), countyFIPS=str_pad(county, 3,pad="0"))
+
+FIPS$geoid <- paste0(FIPS$stateFIPS, FIPS$countyFIPS)
+
+head(FIPS)
+
+FIPS_county <- merge(FIPS,counties, by = "geoid") %>%
+  group_by(state_name, StateAbbr, year) %>%
+  summarise(across(value, sum))
+
+head(FIPS_county)
+summary(FIPS_county)
+```
+
+```{r Graphs}
+USA_facet <- FIPS_county %>%
+  ggplot(data=FIPS_county, mapping = aes(x = year, y = value, color = StateAbbr)) +
+  geom_line() +
+  facet_wrap(~state_name) +
+  labs(title = "Permint Amounts Across States",
+       subtitle = "1980 - 2010",
+       x = "Year", 
+       y = "Permit Amount") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+USA_facet
+
+USA_combine <- FIPS_county %>%
+  ggplot(data=FIPS_county, mapping = aes(x = year, y = value, color = StateAbbr)) +
+  geom_line() +
+  labs(title = "Permint Amounts Across States",
+       subtitle = "1980 - 2010",
+       x = "Year", 
+       y = "Permit Amount") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+USA_combine
+
+Tennessee <- FIPS_county %>%
+  filter(StateAbbr == "TN") %>%
+  ggplot(mapping = aes(x = year, y = value)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Permint Amounts In Tennessee",
+       subtitle = "1980 - 2010",
+       x = "Year", 
+       y = "Permit Amount") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+Tennessee
+
+
+Missouri <- FIPS_county %>%
+  filter(StateAbbr == "MO") %>%
+  ggplot(mapping = aes(x = year, y = value)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Permint Amounts In Missouri",
+       subtitle = "1980 - 2010",
+       x = "Year", 
+       y = "Permit Amount") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+Missouri
+
+
+```
+To show the permit amounts overtime I used line graphs for all three of my graphs.  You can easily see the trends from 1980 - 2010.  We can see from the first graph that there was overall a spike around 1986 and 2005.  There were crashed after 1986 and in 2007. 
