@@ -1,0 +1,128 @@
+---
+title: "Case Study 11"
+author: "Claire Hays"
+date: "11/13/2022"
+output: 
+  html_document:
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+library(sf)
+library(USAboundaries)
+library(USAboundariesData)
+library(ggsflabel)
+library(maps)
+library(leaflet)
+library(mapview)
+```
+
+```{r data import and tidy}
+temp <- tempfile()
+download.file("https://github.com/WJC-Data-Science/DTS350/raw/master/permits.csv", "temp")
+permits_dat <- read_csv("temp")
+head(permits_dat)
+
+penn <- permits_dat %>%
+  filter(StateAbbr == "PA",
+         year == 2010) %>%
+  group_by(countyname, county) %>%
+  summarise(tot_value = sum(value))
+head(penn)
+
+counties <- read_csv("PA_counties.csv")
+colnames(counties)
+names(counties)[names(counties) == "County Name"] <- "countyname"
+names(counties)[names(counties) == "County Code Number"] <- "county"
+head(counties)
+
+dat <- counties %>% 
+  right_join(penn, counties, by = "county") %>%
+  arrange(desc(tot_value)) %>%
+  drop_na()
+
+head(dat)
+```
+
+```{r rank and section counties}
+
+dat$quartiles <- cut(dat$tot_value, quantile(dat$tot_value), include.lowest = TRUE, labels = FALSE)
+head(dat)
+
+top_penn_county <- dat %>%
+      filter(row_number() == 1)
+
+q1 <- dat %>%
+  filter(quartiles == 1)
+q2 <- dat %>%
+  filter(quartiles == 2)
+q3 <- dat %>%
+  filter(quartiles == 3)
+q4 <- dat %>%
+  filter(quartiles == 4)
+
+```
+
+```{r create map}
+
+PA_map <- leaflet() %>% 
+  addTiles() %>%
+  addCircleMarkers(
+    data = q4,
+    label = ~countyname.x,
+    color = "red",
+    popup = ~as.character(tot_value),
+    fillOpacity = .5) %>%  
+  addCircleMarkers(
+    data = q3,
+    label = ~countyname.x,
+    color = "orange",
+    popup = ~as.character(tot_value),
+    fillOpacity = .5) %>% 
+  addCircleMarkers(
+    data = q2,
+    label = ~countyname.x,
+    color = "yellow",
+    popup = ~as.character(tot_value),
+    fillOpacity = .5) %>%
+  addCircleMarkers(
+    data = q1,
+    label = ~countyname.x,
+    color = "blue",
+    popup = ~as.character(tot_value),
+    fillOpacity = .5) %>% 
+  addCircleMarkers(
+    data = top_penn_county,
+    label = ~countyname.x,
+    color = "green",
+    popup = ~as.character(tot_value),
+    fillOpacity = .5)
+PA_map
+
+head(dat)
+```
+This interactive map shows us that the best county (in regrards to housing permits) is Armstrong (green).  In regards to the other counties, the top quartile is blue, the second quartile is yellow, the third quartile is orange, and the worst/bottom quartile is red.  I would reccomend my friend to move to following counties such as Potter, Tiago, Westmoreland, Bedford, Huntingdon, York, Montour, Sullivan, and Lackawanna.  
