@@ -1,0 +1,50 @@
+---
+title: "Task 20?"
+author: "Claire Hays"
+date: "11/16/2022"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(gapminder)
+library(ggplot2)
+library(gganimate)
+library(gifski)
+library(datasauRus)
+```
+
+```{r}
+
+
+data <- mutate(filter(gapminder, country != 'Kuwait'),
+              Population_100k = pop / 100000)
+
+
+```
+
+```{r Case Study 3 graph}
+
+animation <- ggplot(data=data, aes(x=lifeExp, y=gdpPercap, size=Population_100k, color=continent)) +
+  geom_point(alpha = 0.7, show.legend = TRUE) +
+  scale_colour_manual(values = continent_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  labs(title = 'Year: {frame_time}', x='Life Expectancy', y='GDP per capita') +
+  transition_time(year) +
+  ease_aes('linear')
+
+animation
+
+anim_save("animation.gif")
+```
+
