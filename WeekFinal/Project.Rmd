@@ -1,0 +1,519 @@
+---
+title: "DTS 350 Final Project on Heart Disease"
+author: "Claire Hays"
+output:
+  html_document:
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+library(sf)
+library(USAboundaries)
+library(USAboundariesData)
+library(ggsflabel)
+library(maps)
+library(leaflet)
+library(mapview)
+library(gapminder)
+library(gganimate)
+library(gifski)
+library(datasauRus)
+library(readxl)
+library(gridExtra)
+library(rbokeh)
+library(MASS)
+```
+
+<font size="+2">Background:</font>
+
+<font size="-1">This data set is originally from the CDC, but I found a condensed and cleaned version on Kaggle. The data comes from the 2020 annual CDC survey data of about 400k adults related to their health status.  There were 18 variables for a population of 319,795 individuals.</font>
+
+<font size="-1">Variables included yes/no answers for the following: heart disease, smoking, alcohol drinking, stroke, difficulty walking, diabetic, physical activity, asthma, kidney disease, and skin cancer.  It also included variables that were ranked on various scales for BMI, physical health, mental health, general health, and sleep time.  Lastly included individuals sex, age range, and race.</font>
+
+<font size="-1">Throughout my analysis I used the following variables: heart disease, smoking, diabetic, BMI, sleep time, sex, and age range. </font>
+
+<font size="-1">It should be noted that for the sake of the analysis I assigned numeric values to the heart disease variable.  For the entire analysis 'No' heart disease is represented as a -1 and 'Yes' heart disease is represented as a 1. </font>
+
+<font size="+2">Overarching Question: Are certain variables indicative of the likelihood of having heart disease?</font>
+
+<font size="-1">Questions: </font>
+
+<font size="-1">1) What percentage of the population had heart disease?</font>
+
+<font size="-1">2) Are males or females more likely to have heart disease?</font>
+
+<font size="-1">3) Is age an indicator for how likely it is to have heart disease?</font>
+
+<font size="-1">4) Are individuals with diabetes more likely to have heart disease than 
+those without diabetes?</font>
+
+<font size="-1">5) Are individuals that have ever smoked more likely to have heart disease than those that have never smoked?</font>
+
+<font size="-1">6) How much more likely are individuals to have heart disease if they smoke and are diabetic?</font>
+
+<font size="-1">7) Are individuals with an abnormal BMI more likely to have heart disease than those with a normal BMI?</font>
+
+<font size="-1">8) Does an individuals average amount of sleep indicate their likelihood of having heart disease?</font>
+
+```{r}
+dat <- read_csv("Heart 2020 Cleaned - heart2020cleaned.csv")
+```
+
+<font size="+1">Question 1: What percentage of the population had heart disease?</font>
+```{r}
+heart_desease <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1))
+  
+heart_disease_tibble <- heart_desease %>%
+  group_by(HeartDisease_Num) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100)
+#27,373 = count of individuals with heart disease
+```
+
+```{r}
+heart_desease_plot <- heart_desease %>%
+  group_by(HeartDisease_Num) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x=HeartDisease_Num, y=perc,label=round(perc, digits=2))) +
+  geom_bar(stat="identity") +
+  geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Percentage of People With Heart Disease',
+       subtitle = 'Population: 319,795',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+heart_desease_plot
+```
+
+<font size="-1">Answer 1: 8.56% of the 2022 population had heart disease which is 27,373 individuals. </font>
+
+
+<font size="+1">Question 2: Are males or females more likely to have heart disease?</font>
+
+<font size="-1">First I wanted to quickly "see" if there was an equal number of males and females in the data set. </font>
+
+```{r}
+sex_dist <- ggplot(dat, aes(x=Sex, Fill=Sex))+
+  geom_bar() +
+  labs(
+    x = 'Sex',
+    y = 'Count of People',
+    title = 'Comparing Males vs Females',
+    subtitle = 'Population Size: 319,795',
+    caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+sex_dist
+```
+
+<font size="-1">There is, so then I continued answering my question.</font>
+
+```{r}
+sex_dat <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(HeartDisease_Num == 1)
+
+sex_dat_plot <- sex_dat %>%
+  group_by(HeartDisease_Num, Sex) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x=HeartDisease_Num, y=perc, fill=Sex, label=round(perc, digits=2))) +
+  geom_bar(stat="identity") +
+  facet_wrap(~Sex) +
+  geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='Heart Disease',
+       y='Percentage of People',
+       title='Females vs Males',
+       subtitle = 'Population: 27,373',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+sex_dat_plot
+```
+
+<font size="-1">Answer 2: 41.04% of the individuals with heart disease are females while 58.96 of the individuals with heart disease are males, so males are more likely to have heart disease than females. </font>
+
+<font size="+1">Question 3: Is age an indicator for how likely it is to have heart disease?</font>
+
+<font size="-1">I again wanted to check that there was a relatively even amount of data for each age range considering the full population of individuals in the data set.</font>
+
+```{r}
+dat_hist <- dat %>% 
+  mutate(AgeCat =
+           case_when(
+             AgeCategory == '18-24' ~ 18,
+             AgeCategory == '25-29' ~ 25,
+             AgeCategory == '30-34' ~ 30,
+             AgeCategory == '35-39' ~ 35,
+             AgeCategory == '40-44' ~ 40,
+             AgeCategory == '45-49' ~ 45,
+             AgeCategory == '50-54' ~ 50,
+             AgeCategory == '55-59' ~ 55,
+             AgeCategory == '60-64' ~ 60,
+             AgeCategory == '65-69' ~ 65,
+             AgeCategory == '70-74' ~ 70,
+             AgeCategory == '75-79' ~ 75,
+             AgeCategory == '80 or older' ~ 80
+            ))
+
+hist(dat_hist$AgeCat, ylim = c(0,320000),  main = "Histogram of Age Category Distribution According to the Population")
+
+```
+
+<font size="-1">Distribution was normal. </font>
+```{r}
+age_plot <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(HeartDisease_Num == '1') %>%
+  group_by(HeartDisease_Num, AgeCategory, Sex) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  ggplot(aes(x=AgeCategory, y=number, label=number, fill=AgeCategory)) +
+  geom_col() +
+  facet_wrap(~Sex) +
+  labs(
+    x = 'Age Category',
+    y = 'Count of People',
+    title = 'Age Category of Individuals With Heart Disease',
+    subtitle = 'Population Size: 319,795',
+    caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+age_plot
+```
+
+<font size="-1">Answer 3: It is clear that age is an indicator of the likelihood of having heart disease.  As one gets older they are more likely to have heart disease.</font>
+
+<font size="+1">Question 4: Are individuals with diabetes more likely to have heart disease than those without diabetes?</font>
+
+```{r}
+#how many people had diabetes and how many people smoked
+
+diabetes_count <- dat %>%
+  filter(Diabetic == 'Yes')
+#40,792 diabetics which is 12.76% of population
+
+diabetes_count <- dat %>%
+  filter(Smoking == 'Yes')
+#131,898 diabetics which is 41.24% of population
+```
+
+```{r}
+diabeties_2 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Diabetic=='Yes' | Diabetic == 'No')
+
+diabeties_2_plot <- diabeties_2 %>%
+  group_by(HeartDisease_Num, Diabetic) %>%
+  filter(Diabetic == 'No') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Non-Diabetics',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+diabeties_2_plot
+```
+
+<font size="-1">6.5% of those with diabetes also have heart disease. </font>
+```{r}
+diabeties_1 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Diabetic=='Yes' | Diabetic == 'No')
+
+diabetes_1_plot <- diabeties_1 %>%
+  group_by(HeartDisease_Num, Diabetic) %>%
+  filter(Diabetic == 'Yes') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Diabetics',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+diabetes_1_plot
+```
+
+<font size="-1">21.95% of those with diabetes also have heart disease. </font>
+
+<font size="-1">Answer 4: With only 6.5% of non-diabetics also having heart disease and 21.95% of diabetics also having heart disease, it is shown that individuals with diabetes are 3x more likely also have a heart disease.</font>
+
+<font size="-1">Question 5: Are individuals that have ever smoked more likely to have heart disease than those that have never smoked?</font>
+
+```{r}
+smoking_2 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Smoking=='Yes' | Smoking == 'No')
+
+smoking_2_plot <- smoking_2 %>%
+  group_by(HeartDisease_Num, Smoking) %>%
+  filter(Smoking == 'No') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Never Smokers',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+smoking_2_plot
+```
+
+<font size="-1">6.03% of smokers also have heart disease. </font>
+```{r}
+smoking_1 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Smoking=='Yes' | Smoking == 'No')
+
+smoking_1_plot <- smoking_1 %>%
+  group_by(HeartDisease_Num, Smoking) %>%
+  filter(Smoking == 'Yes') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Ever Smokers',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+smoking_1_plot
+```
+
+<font size="-1">12.16% of smokers also have heart disease. </font>
+
+<font size="-1">Answer 5: With only 6.03% of non-smokers also having heart disease and 12.16% of smokers also having heart disease, it is shown that individuals that smoke are 2x more likely also have a heart disease.</font>
+
+<font size="-1">*Note: You may expect smoking to be even more of an indicator for heart disease, but it should be noted that in this data set smoking is broadly defined as anyone that has smoked 100 cigarettes or 5 packs in their entire life. </font>
+
+<font size="+1">Question 6: How much more likely are individuals to have heart disease if they smoke and are diabetic?</font>
+
+```{r}
+both_2 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Diabetic=='Yes' | Diabetic == 'No') %>%
+  filter(Smoking=='Yes' | Smoking == 'No')
+
+both_2_plot <- both_2 %>%
+  group_by(HeartDisease_Num, Diabetic, Smoking) %>%
+  filter(Diabetic == 'No') %>%
+  filter(Smoking == 'No') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Non-Diabetics That Have Never Smoked',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+both_2_plot
+```
+
+<font size="-1">4.57% of non-diabetic and non-smokers also have heart disease. </font>
+```{r}
+both_1 <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(Diabetic=='Yes' | Diabetic == 'No') %>%
+  filter(Smoking=='Yes' | Smoking == 'No')
+
+both_1_plot <- both_1 %>%
+  group_by(HeartDisease_Num, Diabetic, Smoking) %>%
+  filter(Diabetic == 'Yes') %>%
+  filter(Smoking == 'Yes') %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100) %>%
+  ggplot(aes(x = HeartDisease_Num, y = perc, 
+                 label = round(perc, digits=2))) + 
+        geom_bar(stat="identity") + 
+        geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) + 
+  labs(x='-1 = No Heart Disease AND 1 = Heart Disease',
+       y='Percentage of People',
+       title='Diabetics That Have Ever Smoked',
+       subtitle = 'What Percentage Also Have Heart Disease?',
+       caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_bw()
+both_1_plot
+```
+
+<font size="-1">27.1% of non-diabetic and non-smokers also have heart disease. </font>
+
+<font size="-1">Answer 6: With only 4.57% of non-diabetic and non-smokers also having heart disease and 27.1% of diabetic smokers also having heart disease, it is shown that individuals that have diabetes and smoke are 6x more likely also have a heart disease.</font>
+
+<font size="+1">Question 7: Are individuals with an abnormal BMI more likely to have heart disease that those with a normal BMI?</font>
+
+<font size="-1">Normal BMI includes BMIs between 18.5 and 24.9 while abnormal BMIs include BMIs 25 and higher.  There were about a 100 BMIs that were under 18.5 that I did not include.</font>
+
+```{r}
+BMI_categories <- dat %>% 
+    mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  mutate(BMI_range =
+           case_when(
+             BMI >=25 ~ "Abnormal",
+             BMI >= 18.5 & BMI <=24.9  ~ "Normal"))
+
+BMI_normal <- BMI_categories %>%
+  drop_na() %>%
+  filter(BMI_range == 'Normal') %>%
+  group_by(HeartDisease_Num, BMI_range) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100)
+
+BMI_normal_plot <- ggplot(BMI_normal, aes(x=HeartDisease_Num, y=perc, label=round(perc, digits=2))) +
+  geom_bar(stat="identity") +
+  geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) +
+  labs(
+    y = 'Percent of People',
+    x = '-1 = No Heart Disease AND 1 = Heart Disease',
+    title = 'Normal BMI',
+    subtitle = 'What Percentage Have Heart Disease?',
+    caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_light() 
+BMI_normal_plot
+```
+
+<font size="-1">6.47% of indiviudals with a normal BMI have heart disease. </font>
+```{r}
+BMI_abnormal <- BMI_categories %>%
+  drop_na() %>%
+  filter(BMI_range == 'Abnormal') %>%
+  group_by(HeartDisease_Num, BMI_range) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop') %>%
+  mutate(perc =  (number/sum(number))*100)
+
+BMI_abnormal_plot <- ggplot(BMI_abnormal, aes(x=HeartDisease_Num, y=perc, label=round(perc, digits=2))) +
+  geom_bar(stat="identity") +
+  geom_text(position = position_dodge(width = .9),  
+                             vjust = -0.5,   
+                             size = 3) +
+  labs(
+    y = 'Percent of People',
+    x = '-1 = No Heart Disease AND 1 = Heart Disease',
+    title = 'Abnormal BMI',
+    subtitle = 'What Percentage Have Heart Disease?',
+    caption= 'Source: CDC 2020 Annual Survey Data') +
+  theme_light() 
+BMI_abnormal_plot
+```
+
+<font size="-1">9.51% of individuals with an abnormal (higher than normal) BMI have heart disease. </font>
+
+<font size="-1">Answer 7: With 6.47% of individuals with a normal BMI having heart disease and 9.51% of individuals with an abnormal BMI having heart disease, it is about 50% more likely to have heart disease if you have an abnormal BMI. </font>
+
+<font size="+1">Question 8: Does an individuals average amount of sleep indicate their likelihood of having heart disease?</font>
+
+```{r}
+sleep_table <- dat %>%
+  mutate(HeartDisease_Num =
+           case_when(
+             HeartDisease == 'No' ~ -1,
+             HeartDisease == 'Yes' ~ 1)) %>%
+  filter(HeartDisease_Num == 1) %>%
+  filter(SleepTime >= 5 & SleepTime <= 10) %>%
+  group_by(HeartDisease_Num, SleepTime) %>%
+  summarise(number = sum(abs(HeartDisease_Num)), .groups = 'drop')
+datatable(sleep_table)
+```
+
+<font size="-1">Answer 8: Not really...</font>
+
+
+<font size="+2">Conclusion:</font>
+
+<font size="+1">There are certain variables that indicate an individuals likelihood of having heart disease including sex, age, whether or not they smoke and whether or not they have diabetes, or have diabetes and smoke.  Specifically, males, older individuals, and individuals with a higher than normal BMI are more likely to have heart disease than females, young individuals, and those with normal BMIs.  Additionally, individuals that smoke are 2x as likely to have heart disease than those that do not and individuals that are diabetic are 3x as likely to have heart disease than non-diabetics while individuals that are diabetic and smoke are 6x more likely to have heart disease than individuals that do not have diabetes and do not smoke. And sleep is not a variable that indicates an individuals likelihood of heart disease. </font>
+
