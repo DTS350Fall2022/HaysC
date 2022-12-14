@@ -1,0 +1,130 @@
+---
+title: "Case Study 12"
+author: "Claire Hays"
+date: "11/27/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(knitr)
+library(downloader)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(grid)
+library(corrplot)
+library(readr) 
+library(haven)
+library(readxl)
+library(foreign)
+library(stringr)
+library(stringi)
+library(tidyquant)
+library(timetk)
+library(DT)
+library(dygraphs)
+library(sf)
+library(USAboundaries)
+library(USAboundariesData)
+library(ggsflabel)
+library(maps)
+library(leaflet)
+library(mapview)
+library(gapminder)
+library(gganimate)
+library(gifski)
+library(datasauRus)
+```
+
+```{r dowload data}
+dat <- read_csv("avocado.csv")
+head(dat)
+summary(dat)
+```
+
+```{r separate region column into four sections}
+region_column <- dat %>% distinct(region)
+tail(region_column, 20)
+head(region_column, 20)
+
+
+total <- dat%>%
+  filter(region == 'TotalUS')
+regions <- dat %>%
+  filter(region %in% c("GreatLakes", "MidSouth", "Northeast","NorthernNewEngland", "Plains", "SouthCentral", "Southeast","West", "WestTexNewMexico"))
+states <- dat %>%
+  filter(region == 'California')
+cities <- dat %>%
+  filter(! region %in% c("California","TotalUS", "GreatLakes", "MidSouth", "Northeast", "NorthernNewEngland", "Plains", "SouthCentral", "Southeast", "West", "WestTexNewMexico"))
+```
+
+```{r trends of totalUS}
+prices_over_time <- ggplot(data=total, mapping = aes(x=Date, y =AveragePrice)) +
+  geom_line() +
+  labs(title = 'Avocado Price Trends Over The US',
+       x = 'Date',
+       y = 'Average Price') +
+  theme_bw()
+prices_over_time + transition_reveal(Date)
+```
+
+```{r avo prices over the regions}
+names(regions)[names(regions) == "Total Volume"] <- "totalvolume"
+
+
+price_over_regions <- ggplot(data=regions, mapping = aes(x=Date, y=AveragePrice, color = totalvolume)) +
+  geom_line() +
+  facet_wrap(~region) +
+    labs(title = 'Avocado Price Trends Over US Regions',
+       x = 'Date',
+       y = 'Average Price') +
+  theme_bw()
+price_over_regions + transition_reveal(Date)
+
+```
+
+```{r avo prices over the cities} 
+#show total volume with size = totalvolume
+names(cities)[names(cities) == "Total Volume"] <- "totalvolume"
+
+price_over_cities <- ggplot(data=cities, aes(x=totalvolume, y=AveragePrice, color=region)) +
+  geom_line() +
+  facet_wrap(~year) +
+    labs(title = 'Avocado Price Trends Over Different Cities',
+       x = 'Date',
+       y = 'Average Price') +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+price_over_cities
+```
+
+```{r choose one: stocks}
+start <- as.Date("2015-01-04")
+end <- as.Date("2018-03-25")
+
+CVGW <- tq_get(c("CVGW"), get = "stock.prices", from = start, to = end)
+AVO <- tq_get(c("AVO"), get = "stock.prices", from = start, to = end)
+#keep getting error message for AVO
+
+CVGW_plot <- CVGW %>%  
+          select(symbol, date, adjusted) %>%
+          pivot_wider(names_from = symbol, values_from = adjusted) %>%
+          tk_xts(date_var = date) 
+
+dygraph(CVGW_plot, 
+        main = "CVGW Adjusted Values") %>%
+  dyAxis("y", label = "Adjusted")
+
+```
+
+For prices over time I used a geom_smooth to help my friend easily see the trends over the past several years. 
+We see the total trends over the US is that prices have been fluctuating a lot but have increased over 2017-2018.
+We see over the regions that avo prices have fluctuated a lot but have had a peak in most region in 2017-2018 like we saw in the overall price trends.  
+When looking at the stock prices for the years 2015 - 2018 we can clearly see that they have been steadily increasing especially in the start of 2018.  
